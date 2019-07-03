@@ -3,12 +3,30 @@ try:
 except ImportError:
     from ConfigParser import ConfigParser
 
+from .mqtt import MQTTClient
+
 import random
 import time
 import os
 import collections
 import queue
 import socket
+
+
+def create_filename(tmp):
+    filename = os.path.join(tmp, '{0}.pickle'.format(int(time.time() * 1000)))
+    return filename
+
+def checking_connection(connection):
+    """
+    :return: boolean True or False
+    """
+    if not connection:
+        client = MQTTClient('TestConnection')
+        if network() and client.checking():
+            return True
+        return False
+    return True
 
 
 def network(host="8.8.8.8", port=53, timeout=3):
@@ -21,8 +39,7 @@ def network(host="8.8.8.8", port=53, timeout=3):
         socket.setdefaulttimeout(timeout)
         socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
         return True
-    except Exception as ex:
-        print(ex.message)
+    except:
         return False
 
 
@@ -81,16 +98,20 @@ def instance_config(filename):
         return []
 
 
-def emit_data_mock():
+def emit_data_mock(payload=None, jwt=False):
     """
     :return: {
         'id': int(1),'timestamp': int(123123) ,
         'latitud': float(35.000), 'longitud': float(34.000)
     }
     """
-    return {
+    data = {}
+    if payload:
+        data.update(payload)
+    data.update({
         'id': random.randrange(0, 100),
         'timestamp': int(time.time() * 1000),
         'latitud': float('41.%s' % random.randrange(360000, 450000)),
         'longitud': float('2.%s' % random.randrange(120000, 200000))
-    }
+    })
+    return data
